@@ -1,0 +1,335 @@
+#include <iostream>
+#include <string>
+#include <fstream> // Handle File For Input and Output Operation
+#include <sstream> // Provide Functinalites to work with input and output
+#include <vector> //dynamic array
+#include <map> //assoitated continer that store elements key-value
+#include <algorithm> // this laibrary allow us to work with data structre like searching
+
+using namespace std;
+
+//changed version
+
+class Student;
+class Course;
+
+vector<Student> students; 
+vector<Course> courses;
+
+// Function Declaration
+void Read_File_Data();
+void Store_Data_ToFile();
+void Show_Menu();
+void Rigester_Students();
+void UnRegister_Students();
+
+
+//Student Class
+
+class Student {
+public:
+    int studentID;
+    string name;
+    string email;
+    vector<string> coursesEnrolled;
+
+    void enrollCourse(string course) {
+        coursesEnrolled.push_back(course);
+    }
+
+    void dropCourse(string course) {
+        auto it = find(coursesEnrolled.begin(), coursesEnrolled.end(), course);
+
+        if (it != coursesEnrolled.end()) {
+            coursesEnrolled.erase(it);
+            cout << "Student successfully dropped from course " << course << ".\n";
+        }
+        else {
+            cout << "Student is not enrolled in course " << course << ".\n";
+        }
+    }
+
+    void viewCourses() const { // Modified to const
+        cout << "Courses enrolled by " << name << ":\n";
+        for (const auto& course : coursesEnrolled) {
+            cout << course << endl;
+        }
+    }
+};
+ // Course Class
+
+class Course {
+public:
+    string courseCode;
+    string courseName;
+    Teacher teacher; // Added teacher
+    vector<string> studentsEnrolled;
+
+    void addStudent(string student) {
+        studentsEnrolled.push_back(student);
+    }
+
+// main function
+
+int main() {
+    
+    Read_File_Data();
+    Show_Menu();
+    Store_Data_ToFile();
+
+    return 0;
+}
+
+// Functions Difination
+
+void Read_File_Data() {
+    ifstream inFile;
+
+    //loading data of students
+    inFile.open("students.txt");
+    if (inFile.is_open()) {
+        string line;
+        while (getline(inFile, line)) {
+            stringstream ss(line); //uses for data which is not string but we want to monpulate it
+            int studentID;
+            string name, email;
+            ss >> studentID >> name >> email;
+            Student student;
+            student.studentID = studentID;
+            student.name = name;
+            student.email = email;
+            students.push_back(student);
+        }
+        inFile.close();
+    }
+    else {
+        cout << "Error: Unable to open students.txt\n";
+    }
+
+    // Loading teachers
+    inFile.open("teachers.txt");
+    if (inFile.is_open()) {
+        string line;
+        while (getline(inFile, line)) {
+            stringstream ss(line);
+            int teacherID;
+            string name, email;
+            ss >> teacherID >> name >> email;
+            Teacher teacher;
+            teacher.teacherID = teacherID;
+            teacher.name = name;
+            teacher.email = email;
+            teachers.push_back(teacher);
+        }
+        inFile.close();
+    }
+    else {
+        cout << "Error: Unable to open teachers.txt\n";
+    }
+
+    // Loading courses data
+    inFile.open("courses.txt");
+    if (inFile.is_open()) {
+        string line;
+        while (getline(inFile, line)) {
+            stringstream ss(line);
+            string courseCode, courseName;
+            ss >> courseCode >> courseName;
+            Course course;
+            course.courseCode = courseCode;
+            course.courseName = courseName;
+            courses.push_back(course);
+        }
+        inFile.close();
+    }
+    else {
+        cout << "Error: Unable to open courses.txt\n";
+    }
+}
+
+void Store_Data_ToFile() {
+    ofstream outFile;
+
+    // Saving Student Data
+    outFile.open("students.txt");
+    if (outFile.is_open()) {
+        for (const auto& student : students) {
+            outFile << student.studentID << " " << student.name << " " << student.email << "\n";
+        }
+        outFile.close();
+    }
+    else {
+        cout << "Error: Unable to open students.txt for writing.\n";
+    }
+
+    outFile.open("teachers.txt");
+    if (outFile.is_open()) {
+        for (const auto& teacher : teachers) {
+            outFile << teacher.teacherID << " " << teacher.name << " " << teacher.email << "\n";
+        }
+        outFile.close();
+    }
+    else {
+        cout << "Error: Unable to open teachers.txt for writing.\n";
+    }
+
+    // Saveing courses
+    outFile.open("courses.txt");
+    if (outFile.is_open()) {
+        for (const auto& course : courses) { //auto const mean that corse is a const element in courses part
+            outFile << course.courseCode << " " << course.courseName << "\n";
+        }
+        outFile.close();
+    }
+    else {
+        cout << "Error: Unable to open courses.txt for writing.\n";
+    }
+}
+ 
+void Rigester_Students() {
+    int studentID;
+    string name, email;
+    cout << "Enter Student ID: ";
+    cin >> studentID;
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    cout << "Enter Student Name: ";
+    getline(cin, name);
+
+    cout << "Enter Student Email: ";
+    getline(cin, email);
+
+    // Create student object
+    Student student;
+    student.studentID = studentID;
+    student.name = name;
+    student.email = email;
+
+    // Add student to vector
+    students.push_back(student);
+
+    // Save student to file
+    ofstream outFile("students.txt", ios::app); // append mode
+    if (outFile.is_open()) {
+        outFile << student.studentID << " " << student.name << " " << student.email << "\n";
+        outFile.close();
+        cout << "Student Added Susscefully.\n";
+    }
+    else {
+        cout << "Error: Unable to open students.txt for writing.\n";
+    }
+}
+
+
+void UnRegister_Students() {
+    int studentID;
+    cout << "Enter Student ID: ";
+    cin >> studentID;
+
+    // Searching for the student
+    auto it = find_if(students.begin(), students.end(), [&](const Student& s) { return s.studentID == studentID; });
+    if (it != students.end()) {
+        Student& student = *it; // using it for pointing
+        cout << "Student found:\n";
+        cout << "ID: " << student.studentID << ", Name: " << student.name << ", Email: " << student.email << endl;
+
+        // Remove students from memory
+        students.erase(it);
+        cout << "Student removed from memory.\n";
+
+        // Update students file
+        ofstream outFile("students.txt");
+        if (outFile.is_open()) {
+            // Rewrite all student data to the file except for the removed student
+            for (const auto& s : students) {
+                outFile << s.studentID << " " << s.name << " " << s.email << "\n";
+            }
+            outFile.close();
+            cout << "students.txt updated.\n";
+        }
+        else {
+            cout << "Error: Unable to open students.txt for writing.\n";
+        }
+    }
+    else {
+        cout << "Student not found with ID: " << studentID << endl;
+    }
+}
+
+void Show_Menu() {
+    char choice;
+    bool invalidInput = false;
+
+    do {
+        cout << "\n----------------------------------------------\n";
+        cout << "           University Management System       \n";
+        cout << "----------------------------------------------\n";
+        cout << "1.  Register Student\n";
+        cout << "2.  Remove Student\n";
+        cout << "3.  Assign Instructor\n";
+        cout << "4.  Remove Instructor\n";
+        cout << "5.  Add Course\n";
+        cout << "6.  Delete Course\n";
+        cout << "7.  Enroll Student in Course\n";
+        cout << "8.  Remove Student from Course\n";
+        cout << "9.  View Enrolled Courses\n"; // Added option to view enrolled courses
+        cout << "Q.  Quit\n";
+        cout << "----------------------------------------------\n";
+        cout << endl;
+        cout << "Enter your choice: ";
+
+        cin >> choice;
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+
+        switch (choice) {
+        case '1':
+            Rigester_Students();
+            break;
+        case '2':
+            UnRegister_Students();
+            break;
+        case '3':
+            Teacher_Assigning();
+            break;
+        case '4':
+            Remove_Teacher();
+            break;
+        case '5':
+            Adding_Course();
+            break;
+        case '6':
+            Removing_Course();
+            break;
+        case '7':
+            Adding_StudentsToCourse();
+            break;
+        case '8':
+            Remove_StudentsFromCourse();
+            break;
+        case '9':
+            // Option to view enrolled courses
+            for (const auto& student : students) {
+                if (!student.coursesEnrolled.empty()) {
+                    student.viewCourses();
+                }
+
+                else {
+                    cout << "No courses enrolled by " << student.name << ".\n";
+                }
+            }
+            break;
+        case 'q':
+        case 'Q':
+            cout << "\nExiting program.\n";
+            break;
+        default:
+            cout << "\n----------------------------------------------\n";
+            cout << "Invalid choice. Please try again.\n";
+            invalidInput = true;
+            continue;
+        }
+
+        invalidInput = false;
+    } while (choice != 'q' && choice != 'Q' && !invalidInput);
+}
